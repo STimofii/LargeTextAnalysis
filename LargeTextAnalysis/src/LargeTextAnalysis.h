@@ -13,7 +13,88 @@
 #include "bcppul/timer.h"
 #include "bcppul/file_utils.h"
 
+namespace bulka
+{
+	const char* delimiters = " .,:–—1234567890(){};\"\'`[]/«»!?„“…№#$@*\n\t\r";
+	bool comparator(const std::pair<std::string, unsigned int>& a, const std::pair<std::string, unsigned int>& b);
+	bool comparator_char(const std::pair<char, long long>& a, const std::pair<char, long long>& b);
 
+	class VLT {
+	private:
+	protected:
+		const char* path = nullptr;
+		const char* outFile = nullptr;
+		std::unordered_map<std::string, unsigned int> words;
+		std::vector<std::pair<std::string, unsigned int>> vec_words;
+		long long letters[256]{};
+		long long words_count = 0;
+		long long lines_count = 0;
+		long long length = 0;
+		bcppul::Timer timer;
+	public:
+		VLT(const char* path = nullptr, const char* outFile = nullptr);
+		~VLT();
+		void load();
+		void analys();
+		friend std::ostream& operator<< (std::ostream& out, VLT& vlt);
+		void printResult();
+		void writeResultInFile();
+		void writeResultInFile(bool append);
+		const char* getPath() const;
+		void setPath(const char* path);
+		const char* getOutFile() const;
+		void setOutFile(const char* outFile);
+		std::unordered_map<std::string, unsigned int>& getWords();
+		std::vector<std::pair<std::string, unsigned int>>& getVectorWords();
+		long long* getLetters();
+		bcppul::Timer& getTimer();
+		long long getWordsCount();
+		long long getLinesCount();
+		long long getLength();
+	};
+
+	class Texts {
+	private:
+	protected:
+		const char* outFile = nullptr;
+		std::vector <bulka::VLT> texts;
+		std::unordered_map<std::string, unsigned int> words_sum;
+		std::vector<std::pair<std::string, unsigned int>> vec_words_sum;
+		bool summary = true;
+		long long letters_sum[256]{};
+		long long words_count_sum = 0;
+		long long lines_count_sum = 0;
+		long long length_sum = 0;
+		bcppul::Timer timer;
+	public:
+		Texts(bool summary = true, const char* outFile = nullptr);
+		Texts(std::vector<const char*> paths, bool summary = true, const char* outFile = nullptr);
+		Texts(std::vector<std::string> paths, bool summary = true, const char* outFile = nullptr);
+		~Texts();
+		void singleTextAnalys(bulka::VLT& text);
+		void analys();
+		friend std::ostream& operator<< (std::ostream& out, Texts& texts);
+		void printResultSum();
+		void printResultAll();
+		void writeResultSumInFile();
+		void writeResultAllInFile();
+		void updatePaths(std::vector<const char*> paths);
+		void updatePaths(std::vector<std::string> paths);
+		std::unordered_map<std::string, unsigned int>& getWordsSum();
+		std::vector<std::pair<std::string, unsigned int>>& getVectorWordsSum();
+		long long* getLettersSum();
+		bcppul::Timer& getTimer();
+		long long getWordsCountSum();
+		long long getLinesCountSum();
+		long long getLengthSum();
+		bool isSummary();
+		void setSummary(bool summary);
+		const char* getOutFile();
+		void setOutFile(const char* outFile);
+	};
+	void parseArguments(int argc, char* argv[], bool& recursively, bool& summary, bool& print, const char*& outFile, std::vector<std::string>& files);
+	void largeTextAnalysis(int argc, char* argv[]);
+} //namespace bulka
 
 
 #endif
