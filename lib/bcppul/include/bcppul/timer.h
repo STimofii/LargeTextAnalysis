@@ -6,6 +6,7 @@
 #include "bcppul_expimp.h"
 #include <iostream>
 #include <chrono>
+#include <iomanip>
 
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -19,7 +20,8 @@ namespace bcppul {
 
 	class BCPPUL_API Timer {
 	public:
-		Timer();
+		static const char* pseudo;
+		Timer(const char* name = nullptr, bool auto_start = false);
 		~Timer();
 		Timer(const Timer& other);
 		Timer& operator=(const Timer& other);
@@ -46,9 +48,12 @@ namespace bcppul {
 		virtual long double getTimeMilliseconds();
 		virtual long double getTimeMicroseconds();
 		virtual unsigned long long getTimeNanoseconds();
+		virtual const char* getName() const;
+		virtual void setName(const char* name);
 
 	protected:
-		unsigned long long start_time;
+		const char* name = nullptr;
+		unsigned long long start_time = 0;
 		unsigned long long stop_time = 0;
 		unsigned long long time = 0;
 		bool running = false;
@@ -59,7 +64,8 @@ namespace bcppul {
 
 	class BCPPUL_API SimpleTimer : public Timer{
 	public:
-		SimpleTimer();
+		static const char* pseudo;
+		SimpleTimer(const char* name = nullptr, bool auto_start = true);
 		~SimpleTimer();
 	protected:
 	private:
@@ -67,7 +73,8 @@ namespace bcppul {
 
 	class BCPPUL_API CPUCyclesTimer : public Timer {
 	public:
-		CPUCyclesTimer();
+		static const char* pseudo;
+		CPUCyclesTimer(const char* name = nullptr, bool auto_start = false);
 		~CPUCyclesTimer();
 		virtual unsigned long long start() override;
 		virtual unsigned long long stop() override;
@@ -84,7 +91,8 @@ namespace bcppul {
 	};
 	class BCPPUL_API CPUCyclesSimpleTimer : public CPUCyclesTimer {
 	public:
-		CPUCyclesSimpleTimer();
+		static const char* pseudo;
+		CPUCyclesSimpleTimer(const char* name = nullptr, bool auto_start = true);
 		~CPUCyclesSimpleTimer();
 	protected:
 	private:

@@ -2,6 +2,8 @@
 
 #include "LargeTextAnalysis.h"
 
+const char* locale = "ua";
+
 namespace bulka {
 	const char* delimiters = " .,:–—1234567890(){};\"\'`[]/«»!?„“…№#$@*\n\t\r";
 
@@ -21,7 +23,9 @@ namespace bulka {
 
 	class VLT {
 	private:
+	protected:
 		const char* path = nullptr;
+		const char* outFile = nullptr;
 		std::unordered_map<std::string, unsigned int> words;
 		std::vector<std::pair<std::string, unsigned int>> vec_words;
 		long long letters[256]{};
@@ -29,13 +33,8 @@ namespace bulka {
 		long long lines_count = 0;
 		long long length = 0;
 		bcppul::Timer timer;
-	protected:
 	public:
-		VLT()
-		{
-
-		}
-		VLT(const char* path) : path(path)
+		VLT(const char* path = nullptr, const char* outFile = nullptr) : path(path), outFile(outFile)
 		{
 
 		}
@@ -45,10 +44,11 @@ namespace bulka {
 
 		void load() {
 			std::cout << "Analyzing " << path << std::endl;
+			timer.setName(path);
 			timer.start();
 			std::ifstream fin;
 			//fin.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-			//fin.imbue(std::locale("ru"));
+			//fin.imbue(std::locale(locale));
 			fin.open(path);
 
 
@@ -150,20 +150,23 @@ namespace bulka {
 		void printResult() {
 			std::cout << *this << std::endl;
 		}
-		void writeResultInFile(const char* outFilePath) {
-			writeResultInFile(outFilePath, false);
+		void writeResultInFile() {
+			writeResultInFile(false);
 		}
-		void writeResultInFile(const char* outFilePath, bool append) {
+		void writeResultInFile(bool append) {
+			if (outFile == nullptr) {
+				return;
+			}
 			std::ofstream fout;
 			fout.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-			fout.imbue(std::locale("ru"));
-			if(append)
+			//fout.imbue(std::locale(locale));
+			if (append)
 			{
-				fout.open(outFilePath, std::fstream::ios_base::app);
+				fout.open(outFile, std::fstream::ios_base::app);
 			}
 			else
 			{
-				fout.open(outFilePath);
+				fout.open(outFile);
 			}
 
 			if (!fout.is_open()) {
@@ -181,6 +184,12 @@ namespace bulka {
 		}
 		void setPath(const char* path) {
 			this->path = path;
+		}
+		const char* getOutFile() const {
+			return outFile;
+		}
+		void setOutFile(const char* outFile) {
+			this->outFile = outFile;
 		}
 		std::unordered_map<std::string, unsigned int>& getWords() {
 			return words;
@@ -210,21 +219,27 @@ namespace bulka {
 
 	class Texts {
 	private:
+	protected:
+		const char* outFile = nullptr;
 		std::vector <bulka::VLT> texts;
 		std::unordered_map<std::string, unsigned int> words_sum;
 		std::vector<std::pair<std::string, unsigned int>> vec_words_sum;
+		bool summary = true;
 		long long letters_sum[256]{};
 		long long words_count_sum = 0;
 		long long lines_count_sum = 0;
 		long long length_sum = 0;
 		bcppul::Timer timer;
-	protected:
 	public:
-		Texts()
+		Texts(bool summary = true, const char* outFile = nullptr) : summary(summary), outFile(outFile)
 		{
 
 		}
-		Texts(std::vector<const char*> paths)
+		Texts(std::vector<const char*> paths, bool summary = true, const char* outFile = nullptr) : summary(summary), outFile(outFile)
+		{
+			updatePaths(paths);
+		}
+		Texts(std::vector<std::string> paths, bool summary = true, const char* outFile = nullptr) : summary(summary), outFile(outFile)
 		{
 			updatePaths(paths);
 		}
@@ -240,11 +255,12 @@ namespace bulka {
 		void analys() {
 			try {
 				timer.start();
+				timer.setName("Texts");
 				std::cout << "Analyzing many files" << std::endl;
 				std::vector<std::thread> threads;
 				threads.reserve(texts.size());
 				for (auto& text : texts) {
-					threads.emplace_back([&text, this](){singleTextAnalys(text);});
+					threads.emplace_back([&text, this]() {singleTextAnalys(text); });
 				}
 				for (auto& t : threads) {
 					if (t.joinable()) {
@@ -319,33 +335,50 @@ namespace bulka {
 				text.printResult();
 			}
 		}
-		void writeResultSumInFile(const char* outFilePath) {
+		void writeResultSumInFile() {
+			if (outFile == nullptr) {
+				return;
+			}
 			std::ofstream fout;
 			fout.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-			fout.imbue(std::locale("ru"));
-			fout.open(outFilePath);
+			//fout.imbue(std::locale(locale));
+			fout.open(outFile);
 
 			if (!fout.is_open()) {
 				throw std::exception("FOUT IS NOT OPEN!");
 			}
 
-			fout.imbue(std::locale("C"));
-			fout << *this << std::endl;
+			if (summary) {
+				fout << *this << std::endl;
+			}
 			fout.close();
 		}
-		void writeResultAllInFile(const char* outFilePath) {
-			writeResultSumInFile(outFilePath);
+		void writeResultAllInFile() {
+			writeResultSumInFile();
 			for (auto& text : texts) {
-				text.writeResultInFile(outFilePath, true);
+				text.writeResultInFile(true);
 			}
 		}
-		
-		
+
+
 		void updatePaths(std::vector<const char*> paths)
 		{
 			for (size_t i = 0; i < paths.size(); i++)
 			{
-				texts.push_back(VLT(paths[i]));
+				texts.push_back(VLT(paths[i], outFile));
+			}
+		}
+		void updatePaths(std::vector<std::string> paths)
+		{
+			for (size_t i = 0; i < paths.size(); i++)
+			{
+				char* str = new char[paths[i].length() + 1];
+				str[paths[i].length()] = '\0';
+				for (size_t j = 0; j < paths[i].length() + 1; j++)
+				{
+					str[j] = paths[i][j];
+				}
+				texts.push_back(VLT(str, outFile));
 			}
 		}
 
@@ -363,33 +396,125 @@ namespace bulka {
 		}
 
 
-		long long getWordsCountSum() {
+		long long getWordsCountSum() const {
 			return words_count_sum;
 		}
-		long long getLinesCountSum() {
+		long long getLinesCountSum() const {
 			return lines_count_sum;
 		}
-		long long getLengthSum() {
+		long long getLengthSum() const {
 			return length_sum;
 		}
+		bool isSummary() const {
+			return summary;
+		}
+		void setSummary(bool summary) {
+			this->summary = summary;
+		}
+		const char* getOutFile() const {
+			return outFile;
+		}
+		void setOutFile(const char* outFile) {
+			this->outFile = outFile;
+			for (auto& text : texts) {
+				text.setOutFile(outFile);
+			}
+		}
 	};
+	void parseArguments(int argc, char* argv[],
+		bool& recursively, bool& summary, bool& print, const char*& outFile, std::vector<std::string>& files
+	) {
+		for (size_t i = 1; i < argc; i++)
+		{
+			const char* arg = argv[i];
+			if (arg[0] == '-') {
+				
+				for (int ptr = 1; arg[ptr] != '\0'; ++ptr) {
+					if (arg[ptr] == 'r') {
+						recursively = true;
+					}
+					else if (arg[ptr] == 'S') {
+						summary = false;
+					}
+					else if (arg[ptr] == 'p') {
+						print = true;
+					}
+					else if (arg[ptr] == 'o') {
+						if (i + 1 == argc || argv[i + 1][0] == '-') {
+							throw std::invalid_argument("Invalid arguments!\n\tAfter -o flag (output file) must be a name of file!!!");
+						}
+						outFile = argv[i + 1];
+						++i;
+					}
+					else if (arg[ptr] == 'l') {
+						if (i + 1 == argc || argv[i + 1][0] == '-') {
+							throw std::invalid_argument("Invalid arguments!\n\tAfter -l flag (locale) must be a locale!!!");
+						}
+						outFile = argv[i + 1];
+						++i;
+						setlocale(LC_ALL, locale);
+					}
+					else {
+						throw std::invalid_argument("Invalid arguments!\n\tUnknown flag \'" + std::string(arg) + "\'!!!");
+					}
+				}
 
+			}
+			else {
+				if (std::filesystem::is_regular_file(arg)) {
+					files.push_back(arg);
+				}
+				else if (std::filesystem::is_directory(arg)) {
+					std::vector<std::string> dir_files = bcppul::getFilesInDirectory(arg, recursively);
+					files.insert(files.end(), dir_files.begin(), dir_files.end());
+				}
+			}
+		}
+		if (files.empty()) {
+			std::vector<std::string> dir_files = bcppul::getFilesInDirectory(".", recursively);
+			files.insert(files.end(), dir_files.begin(), dir_files.end());
+			std::string first_arg(argv[0]);
+#ifdef _WIN32
+			std::string exe_name = first_arg.substr(first_arg.find_last_of("\\") + 1);
+#endif
+#ifdef __linux__
+			std::string exe_name = first_arg.substr(first_arg.find_last_of("/") + 1);
+#endif
+			files.erase(std::remove(files.begin(), files.end(), "./" + exe_name), files.end());
+		}
+	}
+
+	void largeTextAnalysis(int argc, char* argv[]) {
+		bcppul::SimpleTimer timer("root");
+		bool recursively = false;
+		bool summary = true;
+		bool print = false;
+		const char* outFile = nullptr;
+		std::vector<std::string> files;
+		parseArguments(argc, argv, recursively, summary, print, outFile, files);
+
+
+		Texts texts(files, summary, outFile);
+		texts.analys();
+		if (print)
+			texts.printResultAll();
+		texts.writeResultAllInFile();
+	}
 } //namespace bulka
 
-int main()
-{
-	setlocale(LC_ALL, "ru");
-	bcppul::SimpleTimer timer;
-	std::vector<const char*> paths;
-	paths.push_back("../../../../texts/metro2033.txt");
-	paths.push_back("../../../../texts/metro2034.txt");
-	paths.push_back("../../../../texts/metro2035.txt");
-	bulka::Texts texts(paths);
-	texts.analys();
-	//texts.printResultAll();
-	texts.writeResultAllInFile("out.txt");
-	//TODO: Console args
 
+
+
+
+int main(int argc, char* argv[])
+{
+	try
+	{
+		bulka::largeTextAnalysis(argc, argv);
+	}
+	catch (std::exception exception) {
+		std::cerr << "Error in main: " << exception.what() << std::endl;
+	}
 
 	return 0;
 }
