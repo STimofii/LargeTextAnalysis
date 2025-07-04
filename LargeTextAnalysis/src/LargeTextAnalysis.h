@@ -16,20 +16,20 @@
 
 namespace bulka
 {
-	char* delimiters = new char[] {" .,:–—1234567890(){};\"\'`[]/«»!?„“…№#$@*\n\t\r"};
-	bool comparator(const std::pair<std::string, unsigned int>& a, const std::pair<std::string, unsigned int>& b);
-	bool comparator_char(const std::pair<char, long long>& a, const std::pair<char, long long>& b);
+	extern char* delimiters;
+	bool comparator(const std::pair<std::string, unsigned long long>& a, const std::pair<std::string, unsigned long long>& b);
+	bool comparator_char(const std::pair<char, unsigned long long>& a, const std::pair<char, unsigned long long>& b);
 
 	class VLT {
 	private:
 	protected:
 		std::string path = "";
 		std::string outFile = "";
-		std::unordered_map<std::string, unsigned int> words;
-		long long letters[256]{};
-		long long words_count = 0;
-		long long lines_count = 0;
-		long long length = 0;
+		std::unordered_map<std::string, unsigned long long> words;
+		unsigned long long letters[256]{};
+		unsigned long long words_count = 0;
+		unsigned long long lines_count = 0;
+		unsigned long long length = 0;
 		bcppul::Timer timer;
 	public:
 		VLT(const std::string path = "", const std::string outFile = "");
@@ -44,12 +44,12 @@ namespace bulka
 		void setPath(std::string& path);
 		const std::string& getOutFile() const;
 		void setOutFile(std::string& outFile);
-		std::unordered_map<std::string, unsigned int>& getWords();
-		long long* getLetters();
+		std::unordered_map<std::string, unsigned long long>& getWords();
+		unsigned long long* getLetters();
 		bcppul::Timer& getTimer();
-		long long getWordsCount();
-		long long getLinesCount();
-		long long getLength();
+		unsigned long long getWordsCount();
+		unsigned long long getLinesCount();
+		unsigned long long getLength();
 	};
 
 	class Texts {
@@ -57,13 +57,13 @@ namespace bulka
 	protected:
 		std::string outFile = "";
 		std::vector <bulka::VLT> texts;
-		std::unordered_map<std::string, unsigned int> words_sum;
+		std::unordered_map<std::string, unsigned long long> words_sum;
 		bool summary = true;
 		bool each = true;
-		long long letters_sum[256]{};
-		long long words_count_sum = 0;
-		long long lines_count_sum = 0;
-		long long length_sum = 0;
+		unsigned long long letters_sum[256]{};
+		unsigned long long words_count_sum = 0;
+		unsigned long long lines_count_sum = 0;
+		unsigned long long length_sum = 0;
 		bcppul::Timer timer;
 	public:
 		Texts(bool summary = true, bool each = true, const std::string outFile = "");
@@ -78,12 +78,12 @@ namespace bulka
 		void writeResultAllInFile();
 		void updatePaths(std::vector<const char*> paths);
 		void updatePaths(std::vector<std::string> paths);
-		std::unordered_map<std::string, unsigned int>& getWordsSum();
-		long long* getLettersSum();
+		std::unordered_map<std::string, unsigned long long>& getWordsSum();
+		unsigned long long* getLettersSum();
 		bcppul::Timer& getTimer();
-		long long getWordsCountSum();
-		long long getLinesCountSum();
-		long long getLengthSum();
+		unsigned long long getWordsCountSum();
+		unsigned long long getLinesCountSum();
+		unsigned long long getLengthSum();
 		bool isSummary() const;
 		void setSummary(bool summary);
 		bool isEach() const;

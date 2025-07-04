@@ -5,13 +5,15 @@
 const char* locale = "ua";
 
 namespace bulka {
-	bool comparator(const std::pair<std::string, unsigned int>& a, const std::pair<std::string, unsigned int>& b) {
+	char* delimiters = new char[] {" .,:–—1234567890(){};\"\'`[]/«»!?„“…№#$@*\n\t\r"};
+
+	bool comparator(const std::pair<std::string, unsigned long long>& a, const std::pair<std::string, unsigned long long>& b) {
 		if (a.second != b.second) {
 			return a.second > b.second;
 		}
 		return a.first < b.first;
 	}
-	bool comparator_char(const std::pair<char, long long>& a, const std::pair<char, long long>& b) {
+	bool comparator_char(const std::pair<char, unsigned long long>& a, const std::pair<char, unsigned long long>& b) {
 		if (a.second != b.second) {
 			return a.second > b.second;
 		}
@@ -451,10 +453,10 @@ namespace bulka {
 		}
 	}
 
-	std::unordered_map<std::string, unsigned int>& VLT::getWords() {
+	std::unordered_map<std::string, unsigned long long>& VLT::getWords() {
 		return words;
 	}
-	long long* VLT::getLetters() {
+	unsigned long long* VLT::getLetters() {
 		return letters;
 	}
 	bcppul::Timer& VLT::getTimer() {
@@ -462,19 +464,19 @@ namespace bulka {
 	}
 
 
-	long long  VLT::getWordsCount() {
+	unsigned long long  VLT::getWordsCount() {
 		return words_count;
 	}
-	long long  VLT::getLinesCount() {
+	unsigned long long  VLT::getLinesCount() {
 		return lines_count;
 	}
-	long long  VLT::getLength() {
+	unsigned long long  VLT::getLength() {
 		return length;
 	}
-	std::unordered_map<std::string, unsigned int>& Texts::getWordsSum() {
+	std::unordered_map<std::string, unsigned long long>& Texts::getWordsSum() {
 		return words_sum;
 	}
-	long long* Texts::getLettersSum() {
+	unsigned long long* Texts::getLettersSum() {
 		return letters_sum;
 	}
 	bcppul::Timer& Texts::getTimer() {
@@ -482,13 +484,13 @@ namespace bulka {
 	}
 
 
-	long long Texts::getWordsCountSum() {
+	unsigned long long Texts::getWordsCountSum() {
 		return words_count_sum;
 	}
-	long long Texts::getLinesCountSum() {
+	unsigned long long Texts::getLinesCountSum() {
 		return lines_count_sum;
 	}
-	long long Texts::getLengthSum() {
+	unsigned long long Texts::getLengthSum() {
 		return length_sum;
 	}
 	bool Texts::isSummary() const {
