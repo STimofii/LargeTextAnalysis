@@ -3,9 +3,9 @@
 
 #define BCPPUL_VERSION_MAJOR 0
 #define BCPPUL_VERSION_MINOR 1
-#define BCPPUL_VERSION_PATCH 2
+#define BCPPUL_VERSION_PATCH 5
 
-#define BCPPUL_VERSION_STRING "0.1.2"
+#define BCPPUL_VERSION_STRING "0.1.5"
 
 #define BCPPUL_VERSION_CHECK(major, minor, patch) \
     (BCPPUL_VERSION_MAJOR > (major) || \

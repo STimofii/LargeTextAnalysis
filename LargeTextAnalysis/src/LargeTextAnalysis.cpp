@@ -19,17 +19,18 @@ namespace bulka {
 	}
 
 
-	VLT::VLT(const char* path, const char* outFile) : path(path), outFile(outFile)
+	VLT::VLT(const std::string path, const std::string outFile) : path(path), outFile(outFile)
 	{
 
 	}
 	VLT::~VLT() {
+
 	}
 
 
 	void VLT::load() {
 		std::cout << "Analyzing " << path << std::endl;
-		timer.setName(path);
+		timer.setName(path.c_str());
 		timer.start();
 		std::ifstream fin;
 		//fin.exceptions(std::ifstream::failbit | std::ifstream::badbit);
@@ -139,7 +140,7 @@ namespace bulka {
 		writeResultInFile(false);
 	}
 	void  VLT::writeResultInFile(bool append) {
-		if (outFile == nullptr) {
+		if (outFile.empty()) {
 			return;
 		}
 		std::ofstream fout;
@@ -164,15 +165,11 @@ namespace bulka {
 	}
 
 
-	Texts::Texts(bool summary, const char* outFile) : summary(summary), outFile(outFile)
+	Texts::Texts(bool summary, bool each, const std::string outFile) : summary(summary), each(each), outFile(outFile)
 	{
 
 	}
-	Texts::Texts(std::vector<const char*> paths, bool summary, const char* outFile) : summary(summary), outFile(outFile)
-	{
-		updatePaths(paths);
-	}
-	Texts::Texts(std::vector<std::string> paths, bool summary, const char* outFile) : summary(summary), outFile(outFile)
+	Texts::Texts(const std::vector<std::string> paths, bool summary, bool each, const std::string outFile) : summary(summary), each(each), outFile(outFile)
 	{
 		updatePaths(paths);
 	}
@@ -269,7 +266,7 @@ namespace bulka {
 		}
 	}
 	void Texts::writeResultSumInFile() {
-		if (outFile == nullptr) {
+		if (outFile.empty()) {
 			return;
 		}
 		std::ofstream fout;
@@ -288,8 +285,10 @@ namespace bulka {
 	}
 	void Texts::writeResultAllInFile() {
 		writeResultSumInFile();
-		for (auto& text : texts) {
-			text.writeResultInFile(true);
+		if(each){
+			for (auto& text : texts) {
+				text.writeResultInFile(true);
+			}
 		}
 	}
 
@@ -315,22 +314,22 @@ namespace bulka {
 		}
 	}
 
-
-
 	void parseArguments(int argc, char* argv[],
-		bool& recursively, bool& summary, bool& print, const char*& outFile, std::vector<std::string>& files
+		bool& recursively, bool& summary, bool& print, std::string& outFile, std::vector<std::string>& files, bool& each
 	) {
 		for (size_t i = 1; i < argc; i++)
 		{
 			const char* arg = argv[i];
 			if (arg[0] == '-') {
-				
 				for (int ptr = 1; arg[ptr] != '\0'; ++ptr) {
 					if (arg[ptr] == 'r') {
 						recursively = true;
 					}
 					else if (arg[ptr] == 'S') {
 						summary = false;
+					}
+					else if (arg[ptr] == 'E') {
+						each = false;
 					}
 					else if (arg[ptr] == 'p') {
 						print = true;
@@ -342,11 +341,20 @@ namespace bulka {
 						outFile = argv[i + 1];
 						++i;
 					}
+					else if (arg[ptr] == 'c') {
+						if (i + 1 == argc || argv[i + 1][0] == '-') {
+							throw std::invalid_argument("Invalid arguments!\n\tAfter -c flag (delimiters charset) must be a charset!!!");
+						}
+						std::string parsed = bcppul::parseEscapeSequences(std::string(argv[i + 1]));
+						delimiters = new char[parsed.length() + 1];
+						delimiters[parsed.length()] = '\0';
+						strncpy(delimiters, parsed.c_str(), parsed.length());
+						++i;
+					}
 					else if (arg[ptr] == 'l') {
 						if (i + 1 == argc || argv[i + 1][0] == '-') {
 							throw std::invalid_argument("Invalid arguments!\n\tAfter -l flag (locale) must be a locale!!!");
 						}
-						outFile = argv[i + 1];
 						++i;
 						setlocale(LC_ALL, locale);
 					}
@@ -369,28 +377,45 @@ namespace bulka {
 		if (files.empty()) {
 			std::vector<std::string> dir_files = bcppul::getFilesInDirectory(".", recursively);
 			files.insert(files.end(), dir_files.begin(), dir_files.end());
-			std::string first_arg(argv[0]);
+		}
+		std::string first_arg(argv[0]);
 #ifdef _WIN32
-			std::string exe_name = first_arg.substr(first_arg.find_last_of("\\") + 1);
+		std::string exe_name = first_arg.substr(first_arg.find_last_of("\\") + 1);
 #endif
 #ifdef __linux__
-			std::string exe_name = first_arg.substr(first_arg.find_last_of("/") + 1);
+		std::string exe_name = first_arg.substr(first_arg.find_last_of("/") + 1);
 #endif
-			files.erase(std::remove(files.begin(), files.end(), "./" + exe_name), files.end());
-		}
+		files.erase(std::remove(files.begin(), files.end(), "./" + exe_name), files.end());
+		files.erase(std::remove(files.begin(), files.end(), "./" + outFile), files.end());
 	}
 
+
 	void largeTextAnalysis(int argc, char* argv[]) {
+		setlocale(LC_ALL, locale);
 		bcppul::SimpleTimer timer("root");
 		bool recursively = false;
 		bool summary = true;
 		bool print = false;
-		const char* outFile = nullptr;
+		bool each = true;
+		std::string outFile = "";
 		std::vector<std::string> files;
-		parseArguments(argc, argv, recursively, summary, print, outFile, files);
-
-
-		Texts texts(files, summary, outFile);
+		parseArguments(argc, argv, recursively, summary, print, outFile, files, each);
+		std::cout << std::boolalpha << "Welcome to Bulka`s C++ text analizer!\nSettings:\n\tRecursively scan directory- " << recursively << "\n\tSummary out - " << summary << "\n\tOut of Each file - " << each << "\n\tPrint out in console - " << print;
+		if (!outFile.empty()) {
+			std::cout << "\n\tOut in file - " << outFile;
+		}
+		else {
+			std::cout << "\n\tOut in file - false";
+		}
+		std::cout << "\n\tLocale - " << locale;
+		std::cout << "\n\tDelimiters - \'" << bcppul::replaceEscapesWithRaw(delimiters) << "\'";
+		std::cout << "\nFiles for analize: " << files.size();
+		for (size_t i = 0; i < files.size(); i++) {
+			std::cout << "\n\t" << i+1 << ". " << files[i];
+		}
+		
+		std::cout << "\n\nStarting!!!\n" << std::noboolalpha << std::endl;
+		Texts texts(files, summary, each, outFile);
 		texts.analys();
 		if (print)
 			texts.printResultAll();
@@ -399,19 +424,28 @@ namespace bulka {
 
 
 
-
-	const char* VLT::getPath() const {
+	const std::string& VLT::getPath() const {
 		return path;
 	}
-	void  VLT::setPath(const char* path) {
+	void VLT::setPath(std::string& path) {
 		this->path = path;
 	}
-	const char* VLT::getOutFile() const {
+	const std::string& VLT::getOutFile() const {
 		return outFile;
 	}
-	void  VLT::setOutFile(const char* outFile) {
+	void VLT::setOutFile(std::string& outFile) {
 		this->outFile = outFile;
 	}
+	const std::string& Texts::getOutFile() const {
+		return outFile;
+	}
+	void Texts::setOutFile(std::string& outFile) {
+		this->outFile = outFile;
+		for (auto& text : texts) {
+			text.setOutFile(outFile);
+		}
+	}
+
 	std::unordered_map<std::string, unsigned int>& VLT::getWords() {
 		return words;
 	}
@@ -458,20 +492,17 @@ namespace bulka {
 	long long Texts::getLengthSum() {
 		return length_sum;
 	}
-	bool Texts::isSummary() {
+	bool Texts::isSummary() const {
 		return summary;
 	}
 	void Texts::setSummary(bool summary) {
 		this->summary = summary;
 	}
-	const char* Texts::getOutFile() {
-		return outFile;
+	bool Texts::isEach() const {
+		return each;
 	}
-	void Texts::setOutFile(const char* outFile) {
-		this->outFile = outFile;
-		for (auto& text : texts) {
-			text.setOutFile(outFile);
-		}
+	void Texts::setEach(bool each) {
+		this->each = each;
 	}
 } //namespace bulka
 
@@ -484,6 +515,8 @@ int main(int argc, char* argv[])
 	try
 	{
 		bulka::largeTextAnalysis(argc, argv);
+		delete[] bulka::delimiters;
+		bulka::delimiters = nullptr;
 	}
 	catch (std::exception exception) {
 		std::cerr << "Error in main: " << exception.what() << std::endl;
