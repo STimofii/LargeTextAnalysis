@@ -26,7 +26,6 @@ namespace bulka
 		std::string path = "";
 		std::string outFile = "";
 		std::unordered_map<std::string, unsigned int> words;
-		std::vector<std::pair<std::string, unsigned int>> vec_words;
 		long long letters[256]{};
 		long long words_count = 0;
 		long long lines_count = 0;
@@ -46,7 +45,6 @@ namespace bulka
 		const std::string& getOutFile() const;
 		void setOutFile(std::string& outFile);
 		std::unordered_map<std::string, unsigned int>& getWords();
-		std::vector<std::pair<std::string, unsigned int>>& getVectorWords();
 		long long* getLetters();
 		bcppul::Timer& getTimer();
 		long long getWordsCount();
@@ -60,7 +58,6 @@ namespace bulka
 		std::string outFile = "";
 		std::vector <bulka::VLT> texts;
 		std::unordered_map<std::string, unsigned int> words_sum;
-		std::vector<std::pair<std::string, unsigned int>> vec_words_sum;
 		bool summary = true;
 		bool each = true;
 		long long letters_sum[256]{};
@@ -82,7 +79,6 @@ namespace bulka
 		void updatePaths(std::vector<const char*> paths);
 		void updatePaths(std::vector<std::string> paths);
 		std::unordered_map<std::string, unsigned int>& getWordsSum();
-		std::vector<std::pair<std::string, unsigned int>>& getVectorWordsSum();
 		long long* getLettersSum();
 		bcppul::Timer& getTimer();
 		long long getWordsCountSum();

@@ -99,40 +99,7 @@ namespace bulka {
 
 	}
 
-	std::ostream& operator<< (std::ostream& out, VLT& vlt) {
-		vlt.vec_words.reserve(vlt.words.size());
-		for (const auto& pair : vlt.words) {
-			vlt.vec_words.push_back(pair);
-		}
-		std::sort(vlt.vec_words.begin(), vlt.vec_words.end(), comparator);
 
-		std::vector<std::pair<char, long long>> letters_vec(256);
-		for (int i = 0; i < 256; ++i)
-		{
-			letters_vec[i] = std::make_pair(i, vlt.letters[i]);
-		}
-		std::sort(letters_vec.begin(), letters_vec.end(), comparator_char);
-
-		out << "Analyzed file: " << vlt.path << "\nElapsed time - " << vlt.timer.getTimeSeconds() << "s\n";
-		out << "Length: " << vlt.length << "\tLines: " << vlt.lines_count << "\tWords: " << vlt.words_count << "\tUnique words: " << vlt.vec_words.size() << "\n\n";
-
-		for (size_t i = 0; i < vlt.vec_words.size(); ++i)
-		{
-			auto& pair = vlt.vec_words[i];
-			out << i + 1 << ". " << pair.first << ": " << pair.second << "\n";
-		}
-		out << "\n\n\n" << "Chars: " << "\n";
-		for (size_t i = 0; i < letters_vec.size(); ++i)
-		{
-			auto& pair = letters_vec[i];
-			if (pair.second != 0)
-			{
-				out << i + 1 << ". " << pair.first << ": " << pair.second << "\n";
-			}
-		}
-
-		return out;
-	}
 	void  VLT::printResult() {
 		std::cout << *this << std::endl;
 	}
@@ -216,13 +183,49 @@ namespace bulka {
 			std::cerr << "Error in texts analys: " << exception.what() << std::endl;
 		}
 	}
+	std::ostream& operator<< (std::ostream& out, VLT& vlt) {
+		std::vector<std::pair<std::string, unsigned int>> vec_words;
+		vec_words.reserve(vlt.words.size());
+		for (const auto& pair : vlt.words) {
+			vec_words.push_back(pair);
+		}
+		std::sort(vec_words.begin(), vec_words.end(), comparator);
+
+		std::vector<std::pair<char, long long>> letters_vec(256);
+		for (int i = 0; i < 256; ++i)
+		{
+			letters_vec[i] = std::make_pair(i, vlt.letters[i]);
+		}
+		std::sort(letters_vec.begin(), letters_vec.end(), comparator_char);
+
+		out << "Analyzed file: " << vlt.path << "\nElapsed time - " << vlt.timer.getTimeSeconds() << "s\n";
+		out << "Length: " << vlt.length << "\tLines: " << vlt.lines_count << "\tWords: " << vlt.words_count << "\tUnique words: " << vec_words.size() << "\n\n";
+
+		for (size_t i = 0; i < vec_words.size(); ++i)
+		{
+			auto& pair = vec_words[i];
+			out << i + 1 << ". " << pair.first << ": " << pair.second << "\n";
+		}
+		out << "\n\n\n" << "Chars: " << "\n";
+		for (size_t i = 0; i < letters_vec.size(); ++i)
+		{
+			auto& pair = letters_vec[i];
+			if (pair.second != 0)
+			{
+				out << i + 1 << ". " << pair.first << ": " << pair.second << "\n";
+			}
+		}
+
+		return out;
+	}
 
 	std::ostream& operator<< (std::ostream& out, Texts& texts) {
-		texts.vec_words_sum.reserve(texts.words_sum.size());
+		std::vector<std::pair<std::string, unsigned int>> vec_words_sum;
+		vec_words_sum.reserve(texts.words_sum.size());
 		for (const auto& pair : texts.words_sum) {
-			texts.vec_words_sum.push_back(pair);
+			vec_words_sum.push_back(pair);
 		}
-		std::sort(texts.vec_words_sum.begin(), texts.vec_words_sum.end(), comparator);
+		std::sort(vec_words_sum.begin(), vec_words_sum.end(), comparator);
 
 		std::vector<std::pair<char, long long>> letters_vec_sum(256);
 		for (int i = 0; i < 256; ++i)
@@ -237,11 +240,11 @@ namespace bulka {
 			out << "\t" << texts.texts[i].getPath() << "\n";
 		}
 		out << "Elapsed time - " << texts.timer.getTimeSeconds() << "s\n";
-		out << "Length: " << texts.length_sum << "\tLines: " << texts.lines_count_sum << "\tWords: " << texts.words_count_sum << "\tUnique words: " << texts.vec_words_sum.size() << "\n\n";
+		out << "Length: " << texts.length_sum << "\tLines: " << texts.lines_count_sum << "\tWords: " << texts.words_count_sum << "\tUnique words: " << vec_words_sum.size() << "\n\n";
 
-		for (size_t i = 0; i < texts.vec_words_sum.size(); ++i)
+		for (size_t i = 0; i < vec_words_sum.size(); ++i)
 		{
-			auto& pair = texts.vec_words_sum[i];
+			auto& pair = vec_words_sum[i];
 			out << i + 1 << ". " << pair.first << ": " << pair.second << "\n";
 		}
 		out << "\n\n\n" << "Chars: " << "\n";
@@ -449,9 +452,6 @@ namespace bulka {
 	std::unordered_map<std::string, unsigned int>& VLT::getWords() {
 		return words;
 	}
-	std::vector<std::pair<std::string, unsigned int>>& VLT::getVectorWords() {
-		return vec_words;
-	}
 	long long* VLT::getLetters() {
 		return letters;
 	}
@@ -471,9 +471,6 @@ namespace bulka {
 	}
 	std::unordered_map<std::string, unsigned int>& Texts::getWordsSum() {
 		return words_sum;
-	}
-	std::vector<std::pair<std::string, unsigned int>>& Texts::getVectorWordsSum() {
-		return vec_words_sum;
 	}
 	long long* Texts::getLettersSum() {
 		return letters_sum;
