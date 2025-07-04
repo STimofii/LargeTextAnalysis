@@ -319,7 +319,7 @@ namespace bulka {
 		}
 	}
 
-	void parseArguments(int argc, char* argv[],
+	bool parseArguments(int argc, char* argv[],
 		bool& recursively, bool& summary, bool& print, std::string& outFile, std::vector<std::string>& files, bool& each
 	) {
 		for (size_t i = 1; i < argc; i++)
@@ -338,6 +338,9 @@ namespace bulka {
 					}
 					else if (arg[ptr] == 'p') {
 						print = true;
+					}
+					else if (arg[ptr] == 'h' || arg[ptr] == '?') {
+						return true;
 					}
 					else if (arg[ptr] == 'o') {
 						if (i + 1 == argc || argv[i + 1][0] == '-') {
@@ -394,6 +397,7 @@ namespace bulka {
 		if(!outFile.empty()) {
 			files.erase(std::remove(files.begin(), files.end(), "./" + outFile), files.end());
 		}
+		return false;
 	}
 
 
@@ -406,27 +410,42 @@ namespace bulka {
 		bool each = true;
 		std::string outFile = "";
 		std::vector<std::string> files;
-		parseArguments(argc, argv, recursively, summary, print, outFile, files, each);
-		std::cout << std::boolalpha << "Welcome to Bulka`s C++ text analizer!\nSettings:\n\tRecursively scan directory- " << recursively << "\n\tSummary out - " << summary << "\n\tOut of Each file - " << each << "\n\tPrint out in console - " << print;
-		if (!outFile.empty()) {
-			std::cout << "\n\tOut in file - " << outFile;
+		bool help = parseArguments(argc, argv, recursively, summary, print, outFile, files, each);
+		std::cout << "Welcome to Bulka`s C++ text analizer!\nSource code: https://github.com/STimofii/LargeTextAnalysis\n";
+
+		if(!help){
+			std::cout << std::boolalpha << "Settings:\n\tRecursively scan directory - " << recursively << "\n\tSummary out - " << summary << "\n\tOut of Each file - " << each << "\n\tPrint out in console - " << print;
+			if (!outFile.empty()) {
+				std::cout << "\n\tOut in file - " << outFile;
+			}
+			else {
+				std::cout << "\n\tOut in file - false";
+			}
+			std::cout << "\n\tLocale - " << locale;
+			std::cout << "\n\tDelimiters - \'" << bcppul::replaceEscapesWithRaw(delimiters) << "\'";
+			std::cout << "\nFiles for analize: " << files.size();
+			for (size_t i = 0; i < files.size(); i++) {
+				std::cout << "\n\t" << i + 1 << ". " << files[i];
+			}
+
+			std::cout << "\n\nStarting!!!\n" << std::noboolalpha << std::endl;
+			Texts texts(files, summary, each, outFile);
+			texts.analys();
+			if (print)
+				texts.printResultAll();
+			texts.writeResultAllInFile();
 		}
 		else {
-			std::cout << "\n\tOut in file - false";
+			std::cout << "Usage: \n"; 
+			std::cout << "LargeTextAnalys[-l ua][-S][-r][-p][-o out.txt][-c \" ., -;\\t\"] <analize directory/directories/files (this directory if you don't specified)>\n";
+			std::cout << "\tr - recursively scan directory\n";
+			std::cout << "\tS - disable summary\n";
+			std::cout << "\tE - disable output of each text\n";
+			std::cout << "\tp - print results in console\n";
+			std::cout << "\to - save results in file\n";
+			std::cout << "\tl - set locale\n";
+			std::cout << "\tc - delimiters charset\n";
 		}
-		std::cout << "\n\tLocale - " << locale;
-		std::cout << "\n\tDelimiters - \'" << bcppul::replaceEscapesWithRaw(delimiters) << "\'";
-		std::cout << "\nFiles for analize: " << files.size();
-		for (size_t i = 0; i < files.size(); i++) {
-			std::cout << "\n\t" << i+1 << ". " << files[i];
-		}
-		
-		std::cout << "\n\nStarting!!!\n" << std::noboolalpha << std::endl;
-		Texts texts(files, summary, each, outFile);
-		texts.analys();
-		if (print)
-			texts.printResultAll();
-		texts.writeResultAllInFile();
 	}
 
 

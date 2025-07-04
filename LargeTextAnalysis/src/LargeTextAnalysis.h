@@ -91,7 +91,7 @@ namespace bulka
 		const std::string& getOutFile() const;
 		void setOutFile(std::string& outFile);
 	};
-	void parseArguments(int argc, char* argv[], bool& recursively, bool& summary, bool& print, std::string& outFile, std::vector<std::string>& files, bool& each);
+	bool parseArguments(int argc, char* argv[], bool& recursively, bool& summary, bool& print, std::string& outFile, std::vector<std::string>& files, bool& each);
 	void largeTextAnalysis(int argc, char* argv[]);
 } //namespace bulka
 
