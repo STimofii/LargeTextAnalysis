@@ -389,7 +389,9 @@ namespace bulka {
 		std::string exe_name = first_arg.substr(first_arg.find_last_of("/") + 1);
 #endif
 		files.erase(std::remove(files.begin(), files.end(), "./" + exe_name), files.end());
-		files.erase(std::remove(files.begin(), files.end(), "./" + outFile), files.end());
+		if(!outFile.empty()) {
+			files.erase(std::remove(files.begin(), files.end(), "./" + outFile), files.end());
+		}
 	}
 
 
