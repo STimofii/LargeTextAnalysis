@@ -45,8 +45,8 @@ namespace bulka {
 		}
 		std::string line;
 		while (std::getline(fin, line)) {
+			++lines_count;
 			if (line.size() == 0 || line.empty()) {
-				++lines_count;
 				continue;
 			}
 			++text_lines_count;
