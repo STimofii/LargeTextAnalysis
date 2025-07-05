@@ -21,7 +21,7 @@ namespace bulka {
 	}
 
 
-	VLT::VLT(const std::string path, const std::string outFile) : path(path), outFile(outFile)
+	VLT::VLT(const std::string path, bool words_stat, bool chars_stat, const std::string outFile) : path(path), words_stat(words_stat), chars_stat(chars_stat), outFile(outFile)
 	{
 
 	}
@@ -46,9 +46,10 @@ namespace bulka {
 		std::string line;
 		while (std::getline(fin, line)) {
 			if (line.size() == 0 || line.empty()) {
+				++lines_count;
 				continue;
 			}
-			++lines_count;
+			++text_lines_count;
 			length += line.size();
 			for (size_t i = 0; i < line.length(); ++i)
 			{
@@ -134,11 +135,11 @@ namespace bulka {
 	}
 
 
-	Texts::Texts(bool summary, bool each, const std::string outFile) : summary(summary), each(each), outFile(outFile)
+	Texts::Texts(bool summary, bool each, bool words_stat, bool chars_stat, const std::string outFile) : summary(summary), each(each), words_stat(words_stat), chars_stat(chars_stat), outFile(outFile)
 	{
 
 	}
-	Texts::Texts(const std::vector<std::string> paths, bool summary, bool each, const std::string outFile) : summary(summary), each(each), outFile(outFile)
+	Texts::Texts(const std::vector<std::string> paths, bool summary, bool each, bool words_stat, bool chars_stat, const std::string outFile) : summary(summary), each(each), words_stat(words_stat), chars_stat(chars_stat), outFile(outFile)
 	{
 		updatePaths(paths);
 	}
@@ -175,6 +176,7 @@ namespace bulka {
 				}
 				words_count_sum += text.getWordsCount();
 				lines_count_sum += text.getLinesCount();
+				text_lines_count_sum += text.getTextLinesCount();
 				length_sum += text.getLength();
 			}
 
@@ -186,35 +188,37 @@ namespace bulka {
 		}
 	}
 	std::ostream& operator<< (std::ostream& out, VLT& vlt) {
-		std::vector<std::pair<std::string, unsigned int>> vec_words;
-		vec_words.reserve(vlt.words.size());
-		for (const auto& pair : vlt.words) {
-			vec_words.push_back(pair);
-		}
-		std::sort(vec_words.begin(), vec_words.end(), comparator);
-
-		std::vector<std::pair<char, long long>> letters_vec(256);
-		for (int i = 0; i < 256; ++i)
-		{
-			letters_vec[i] = std::make_pair(i, vlt.letters[i]);
-		}
-		std::sort(letters_vec.begin(), letters_vec.end(), comparator_char);
-
 		out << "Analyzed file: " << vlt.path << "\nElapsed time - " << vlt.timer.getTimeSeconds() << "s\n";
-		out << "Length: " << vlt.length << "\tLines: " << vlt.lines_count << "\tWords: " << vlt.words_count << "\tUnique words: " << vec_words.size() << "\n\n";
+		out << "Statistics: \n\tLength: " << vlt.length << "\n\tLines: " << vlt.lines_count << "\n\tText Lines: " << vlt.text_lines_count << "\n\tWords: " << vlt.words_count << "\n\tUnique words: " << vlt.words.size() << "\n\n";
 
-		for (size_t i = 0; i < vec_words.size(); ++i)
-		{
-			auto& pair = vec_words[i];
-			out << i + 1 << ". " << pair.first << ": " << pair.second << "\n";
-		}
-		out << "\n\n\n" << "Chars: " << "\n";
-		for (size_t i = 0; i < letters_vec.size(); ++i)
-		{
-			auto& pair = letters_vec[i];
-			if (pair.second != 0)
+		if(vlt.words_stat){
+			std::vector<std::pair<std::string, unsigned int>> vec_words;
+			vec_words.reserve(vlt.words.size());
+			for (const auto& pair : vlt.words) {
+				vec_words.push_back(pair);
+			}
+			std::sort(vec_words.begin(), vec_words.end(), comparator);
+			for (size_t i = 0; i < vec_words.size(); ++i)
 			{
+				auto& pair = vec_words[i];
 				out << i + 1 << ". " << pair.first << ": " << pair.second << "\n";
+			}
+		}
+		if(vlt.chars_stat){
+			std::vector<std::pair<char, long long>> letters_vec(256);
+			for (int i = 0; i < 256; ++i)
+			{
+				letters_vec[i] = std::make_pair(i, vlt.letters[i]);
+			}
+			std::sort(letters_vec.begin(), letters_vec.end(), comparator_char);
+			out << "\n\n\n" << "Chars: " << "\n";
+			for (size_t i = 0; i < letters_vec.size(); ++i)
+			{
+				auto& pair = letters_vec[i];
+				if (pair.second != 0)
+				{
+					out << i + 1 << ". " << pair.first << ": " << pair.second << "\n";
+				}
 			}
 		}
 
@@ -222,40 +226,42 @@ namespace bulka {
 	}
 
 	std::ostream& operator<< (std::ostream& out, Texts& texts) {
-		std::vector<std::pair<std::string, unsigned int>> vec_words_sum;
-		vec_words_sum.reserve(texts.words_sum.size());
-		for (const auto& pair : texts.words_sum) {
-			vec_words_sum.push_back(pair);
-		}
-		std::sort(vec_words_sum.begin(), vec_words_sum.end(), comparator);
-
-		std::vector<std::pair<char, long long>> letters_vec_sum(256);
-		for (int i = 0; i < 256; ++i)
-		{
-			letters_vec_sum[i] = std::make_pair(i, texts.letters_sum[i]);
-		}
-		std::sort(letters_vec_sum.begin(), letters_vec_sum.end(), comparator_char);
-
 		out << "Analyzed files:\n";
 		for (size_t i = 0; i < texts.texts.size(); i++)
 		{
 			out << "\t" << texts.texts[i].getPath() << "\n";
 		}
 		out << "Elapsed time - " << texts.timer.getTimeSeconds() << "s\n";
-		out << "Length: " << texts.length_sum << "\tLines: " << texts.lines_count_sum << "\tWords: " << texts.words_count_sum << "\tUnique words: " << vec_words_sum.size() << "\n\n";
+		out << "Statistics: \n\tLength: " << texts.length_sum << "\n\tLines: " << texts.lines_count_sum << "\n\tText Lines: " << texts.text_lines_count_sum << "\n\tWords: " << texts.words_count_sum << "\n\tUnique words: " << texts.words_sum.size() << "\n\n";
 
-		for (size_t i = 0; i < vec_words_sum.size(); ++i)
-		{
-			auto& pair = vec_words_sum[i];
-			out << i + 1 << ". " << pair.first << ": " << pair.second << "\n";
-		}
-		out << "\n\n\n" << "Chars: " << "\n";
-		for (size_t i = 0; i < letters_vec_sum.size(); ++i)
-		{
-			auto& pair = letters_vec_sum[i];
-			if (pair.second != 0)
+		if (texts.words_stat) {
+			std::vector<std::pair<std::string, unsigned int>> vec_words;
+			vec_words.reserve(texts.words_sum.size());
+			for (const auto& pair : texts.words_sum) {
+				vec_words.push_back(pair);
+			}
+			std::sort(vec_words.begin(), vec_words.end(), comparator);
+			for (size_t i = 0; i < vec_words.size(); ++i)
 			{
+				auto& pair = vec_words[i];
 				out << i + 1 << ". " << pair.first << ": " << pair.second << "\n";
+			}
+		}
+		if (texts.chars_stat) {
+			std::vector<std::pair<char, long long>> letters_vec(256);
+			for (int i = 0; i < 256; ++i)
+			{
+				letters_vec[i] = std::make_pair(i, texts.letters_sum[i]);
+			}
+			std::sort(letters_vec.begin(), letters_vec.end(), comparator_char);
+			out << "\n\n\n" << "Chars: " << "\n";
+			for (size_t i = 0; i < letters_vec.size(); ++i)
+			{
+				auto& pair = letters_vec[i];
+				if (pair.second != 0)
+				{
+					out << i + 1 << ". " << pair.first << ": " << pair.second << "\n";
+				}
 			}
 		}
 
@@ -298,13 +304,6 @@ namespace bulka {
 	}
 
 
-	void Texts::updatePaths(std::vector<const char*> paths)
-	{
-		for (size_t i = 0; i < paths.size(); i++)
-		{
-			texts.push_back(VLT(paths[i], outFile));
-		}
-	}
 	void Texts::updatePaths(std::vector<std::string> paths)
 	{
 		for (size_t i = 0; i < paths.size(); i++)
@@ -315,12 +314,13 @@ namespace bulka {
 			{
 				str[j] = paths[i][j];
 			}
-			texts.push_back(VLT(str, outFile));
+			texts.push_back(VLT(str, words_stat, chars_stat, outFile));
 		}
 	}
 
 	bool parseArguments(int argc, char* argv[],
-		bool& recursively, bool& summary, bool& print, std::string& outFile, std::vector<std::string>& files, bool& each
+		bool& recursively, bool& summary, bool& print, std::string& outFile, std::vector<std::string>& files, bool& each,
+		bool& words_stat, bool& chars_stat
 	) {
 		for (size_t i = 1; i < argc; i++)
 		{
@@ -335,6 +335,12 @@ namespace bulka {
 					}
 					else if (arg[ptr] == 'E') {
 						each = false;
+					}
+					else if (arg[ptr] == 'W') {
+						words_stat = false;
+					}
+					else if (arg[ptr] == 'A') {
+						chars_stat = false;
 					}
 					else if (arg[ptr] == 'p') {
 						print = true;
@@ -408,13 +414,15 @@ namespace bulka {
 		bool summary = true;
 		bool print = false;
 		bool each = true;
+		bool words_stat = true;
+		bool chars_stat = true;
 		std::string outFile = "";
 		std::vector<std::string> files;
-		bool help = parseArguments(argc, argv, recursively, summary, print, outFile, files, each);
+		bool help = parseArguments(argc, argv, recursively, summary, print, outFile, files, each, words_stat, chars_stat);
 		std::cout << "Welcome to Bulka`s C++ text analizer!\nSource code: https://github.com/STimofii/LargeTextAnalysis\n";
 
 		if(!help){
-			std::cout << std::boolalpha << "Settings:\n\tRecursively scan directory - " << recursively << "\n\tSummary out - " << summary << "\n\tOut of Each file - " << each << "\n\tPrint out in console - " << print;
+			std::cout << std::boolalpha << "Settings:\n\tRecursively scan directory - " << recursively << "\n\tSummary out - " << summary << "\n\tOut of Each file - " << each << "\n\tPrint out in console - " << print << "\n\tWords statistics - " << words_stat << "\n\tChars statistics - " << chars_stat;
 			if (!outFile.empty()) {
 				std::cout << "\n\tOut in file - " << outFile;
 			}
@@ -429,7 +437,7 @@ namespace bulka {
 			}
 
 			std::cout << "\n\nStarting!!!\n" << std::noboolalpha << std::endl;
-			Texts texts(files, summary, each, outFile);
+			Texts texts(files, summary, each, words_stat, chars_stat, outFile);
 			texts.analys();
 			if (print)
 				texts.printResultAll();
@@ -445,6 +453,8 @@ namespace bulka {
 			std::cout << "\to - save results in file\n";
 			std::cout << "\tl - set locale\n";
 			std::cout << "\tc - delimiters charset\n";
+			std::cout << "\tW - disable words statistics\n";
+			std::cout << "\tA - disable chars statistics\n";
 		}
 	}
 
@@ -483,13 +493,16 @@ namespace bulka {
 	}
 
 
-	unsigned long long  VLT::getWordsCount() {
+	unsigned long long  VLT::getWordsCount() const {
 		return words_count;
 	}
-	unsigned long long  VLT::getLinesCount() {
+	unsigned long long  VLT::getLinesCount() const {
 		return lines_count;
 	}
-	unsigned long long  VLT::getLength() {
+	unsigned long long VLT::getTextLinesCount() const {
+		return text_lines_count;
+	}
+	unsigned long long  VLT::getLength() const {
 		return length;
 	}
 	std::unordered_map<std::string, unsigned long long>& Texts::getWordsSum() {
@@ -503,13 +516,17 @@ namespace bulka {
 	}
 
 
-	unsigned long long Texts::getWordsCountSum() {
+	unsigned long long Texts::getWordsCountSum() const {
 		return words_count_sum;
 	}
-	unsigned long long Texts::getLinesCountSum() {
+	unsigned long long Texts::getLinesCountSum() const {
 		return lines_count_sum;
 	}
-	unsigned long long Texts::getLengthSum() {
+	unsigned long long Texts::getTextLinesCountSum() const
+	{
+		return text_lines_count_sum;
+	}
+	unsigned long long Texts::getLengthSum() const {
 		return length_sum;
 	}
 	bool Texts::isSummary() const {
@@ -523,6 +540,30 @@ namespace bulka {
 	}
 	void Texts::setEach(bool each) {
 		this->each = each;
+	}
+	bool Texts::isWordsStat() const {
+		return words_stat;
+	}
+	void Texts::setWordsStat(bool words_stat) {
+		this->words_stat = words_stat;
+	}
+	bool Texts::isCharsStat() const {
+		return chars_stat;
+	}
+	void Texts::setCharsStat(bool chars_stat) {
+		this->chars_stat = chars_stat;
+	}
+	bool VLT::isWordsStat() const {
+		return words_stat;
+	}
+	void VLT::setWordsStat(bool words_stat) {
+		this->words_stat = words_stat;
+	}
+	bool VLT::isCharsStat() const {
+		return chars_stat;
+	}
+	void VLT::setCharsStat(bool chars_stat) {
+		this->chars_stat = chars_stat;
 	}
 } //namespace bulka
 
